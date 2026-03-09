@@ -39,9 +39,11 @@ def receive = {
 /////////////////////////////////////////////////
 
 //Question 1
-// val exemple = ???
 
-val exemple = Nil
+val exemple = Parallel(List(
+  Sequential(List(Note(60, 1000, 100), Note(64, 500, 100), Note(62, 500, 100), Rest(1000), Note(67, 1000, 100))),
+  Sequential(List(Note(52, 2000, 100), Note(55, 1000, 100), Note(55, 1000, 100)))
+));
 
 
 //Question 2
@@ -129,10 +131,7 @@ obj match {
   case Sequential (l) => Sequential (l.reverse.map(retrograde))
   case o => o
 }
-
-//Question 5
-
-
+  
 // make a sequential avec n fois obj
   def repeat (obj:ObjectMusical, n:Int):ObjectMusical =
     Sequential(List.fill(n)(obj))
@@ -142,8 +141,14 @@ obj match {
     Parallel(List(obj, Sequential(List(Rest(n), obj))))
 
 //  Met obj1 et obj2 en sequence
-  def concat (obj1:ObjectMusical, obj2:ObjectMusical):ObjectMusical =
+  def concat_mo (obj1:ObjectMusical, obj2:ObjectMusical):ObjectMusical =
     Sequential(List(obj1, obj2))
+
+val example4 = canon(repeat(exemple, 3), 1000);
+
+//Question 5
+
+
 
 //Question 5 BACH
  val voix1 = Sequential ( List (
@@ -185,16 +190,14 @@ val voix2 = Sequential (List (
   Note (58 , 125 , 100 ),Note (57 , 125 , 100 ),Note (55 , 125 , 100 )))
 
 def canon_Bach (): ObjectMusical = {
-  // Voix 1 : thème du roi, 6 fois, transposé de +2 demi-tons à chaque répétition
-  val v1 = Sequential((0 until 6).map(i => transpose(voix1, i * 2)).toList)
+  def transposedRepeat(base: ObjectMusical, steps: Int, semitones: Int): ObjectMusical =
+    (0 until steps).map(i => transpose(base, i * semitones)).reduceLeft(concat_mo)
 
-  // Voix 2 : thème du canon, 6 fois, transposé de +2 demi-tons à chaque répétition
-  val v2 = Sequential((0 until 6).map(i => transpose(voix2, i * 2)).toList)
+  val v1 = transposedRepeat(voix1, 6, 2)
 
-  // Voix 3 : identique à voix2 mais transposée d'une quinte (+7),
-  //          décalée d'une mesure (2000 ms), répétée 6 fois avec +2 demi-tons
-  val v3Theme = transpose(voix2, 7)
-  val v3 = Sequential(Rest(2000) :: (0 until 6).map(i => transpose(v3Theme, i * 2)).toList)
+  val v2 = transposedRepeat(voix2, 6, 2)
+
+  val v3 = concat_mo(Rest(2000), transposedRepeat(transpose(voix2, 7), 6, 2))
 
   Parallel(List(v1, v2, v3))
 }
